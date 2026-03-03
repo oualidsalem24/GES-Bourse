@@ -14,10 +14,10 @@ with col_logo1:
     st.image("ump.png.png", width=320) 
 
 with col_logo2:
-    st.image("encg.png.png", width=250)
+    st.image("encg.png.png", width=270)
 
 with col_logo3:
-    st.image("facg.png.png", width=150)
+    st.image("facg.png.png", width=170)
 
 st.markdown("---") # Ajoute une belle ligne de séparation sous les logos
 st.title("📊 Prototype GES : Prédiction IA & Analyse Technique")
@@ -133,6 +133,7 @@ col1, col2, col3 = st.columns(3)
 col1.metric("Prix initial (IPO)", f"{prix_initial:.2f} MAD")
 col2.metric(f"Prix estimé en fin de période", f"{prix_final:.2f} MAD", f"{rendement_global:.2f} %")
 col3.metric("Volatilité simulée", f"{volatilite*100:.1f} %")
+
 
 
 
