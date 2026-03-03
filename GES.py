@@ -11,10 +11,10 @@ col_logo1, col_logo2, col_logo3 = st.columns(3)
 
 with col_logo1:
     # Affiche le logo UMP (assurez-vous que le nom du fichier est exact)
-    st.image("ump.png.png", width=150) 
+    st.image("ump.png.png", width=250) 
 
 with col_logo2:
-    st.image("encg.png.png", width=150)
+    st.image("encg.png.png", width=250)
 
 with col_logo3:
     st.image("facg.png.png", width=150)
@@ -133,5 +133,6 @@ col1, col2, col3 = st.columns(3)
 col1.metric("Prix initial (IPO)", f"{prix_initial:.2f} MAD")
 col2.metric(f"Prix estimé en fin de période", f"{prix_final:.2f} MAD", f"{rendement_global:.2f} %")
 col3.metric("Volatilité simulée", f"{volatilite*100:.1f} %")
+
 
 
