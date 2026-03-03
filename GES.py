@@ -6,7 +6,20 @@ from sklearn.linear_model import LinearRegression
 import plotly.graph_objects as go
 
 st.set_page_config(page_title="Simulateur Bourse GES", layout="wide")
+# --- AFFICHAGE DES LOGOS ---
+col_logo1, col_logo2, col_logo3 = st.columns(3)
 
+with col_logo1:
+    # Affiche le logo UMP (assurez-vous que le nom du fichier est exact)
+    st.image("ump.png", width=150) 
+
+with col_logo2:
+    st.image("encg.png", width=150)
+
+with col_logo3:
+    st.image("facg.png", width=150)
+
+st.markdown("---") # Ajoute une belle ligne de séparation sous les logos
 st.title("📊 Prototype GES : Prédiction IA & Analyse Technique")
 st.markdown("Ce simulateur lit vos indicateurs en temps réel depuis Google Sheets, génère une prédiction IA, et simule le comportement boursier du titre **Green Energy Solutions (GES)**.")
 
@@ -120,3 +133,4 @@ col1, col2, col3 = st.columns(3)
 col1.metric("Prix initial (IPO)", f"{prix_initial:.2f} MAD")
 col2.metric(f"Prix estimé en fin de période", f"{prix_final:.2f} MAD", f"{rendement_global:.2f} %")
 col3.metric("Volatilité simulée", f"{volatilite*100:.1f} %")
+
