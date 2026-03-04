@@ -63,9 +63,10 @@ with onglet_ia:
     st.markdown(f"### Modèle Prédictif sur {annees} ans")
     jours_cotation = annees * 252
     tendance_journaliere = tendance_annuelle / 252 
-
+    volatilite_journaliere = volatilite / np.sqrt(252) # La formule mathématique exacte
+    
     np.random.seed(42)
-    rendements = np.random.normal(loc=tendance_journaliere, scale=volatilite, size=jours_cotation)
+    rendements = np.random.normal(loc=tendance_journaliere, scale=volatilite_journaliere, size=jours_cotation)
     prix_cloture = prix_initial * np.cumprod(1 + rendements)
 
     dates = pd.date_range(start=maintenant, periods=jours_cotation, freq='B')
@@ -161,6 +162,7 @@ with onglet_live:
             margin=dict(l=10, r=10, t=40, b=10)
         )
         st.plotly_chart(fig_live, use_container_width=True)
+
 
 
 
