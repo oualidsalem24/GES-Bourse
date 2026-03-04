@@ -13,11 +13,11 @@ st.set_page_config(page_title="Simulateur Bourse GES", layout="wide")
 # --- AFFICHAGE DES LOGOS ---
 col_logo1, col_logo2, col_logo3 = st.columns(3)
 with col_logo1:
-    st.image("ump.png", width=250) 
+    st.image("ump.png.png", width=400) 
 with col_logo2:
-    st.image("encg.png", width=250)
+    st.image("encg.png.png", width=300)
 with col_logo3:
-    st.image("facg.png", width=130)
+    st.image("facg.png.png", width=170)
 
 st.markdown("---")
 
@@ -151,3 +151,4 @@ with onglet_live:
             margin=dict(l=10, r=10, t=40, b=10)
         )
         st.plotly_chart(fig_live, use_container_width=True)
+
