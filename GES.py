@@ -4,26 +4,39 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 import plotly.graph_objects as go
+from datetime import datetime, timedelta
+import pytz
 
+# --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Simulateur Bourse GES", layout="wide")
+
 # --- AFFICHAGE DES LOGOS ---
 col_logo1, col_logo2, col_logo3 = st.columns(3)
 
 with col_logo1:
-    # Affiche le logo UMP (assurez-vous que le nom du fichier est exact)
-    st.image("ump.png.png", width=320) 
+    st.image("ump.png", width=250) 
 
 with col_logo2:
-    st.image("encg.png.png", width=270)
+    st.image("encg.png", width=250)
 
 with col_logo3:
-    st.image("facg.png.png", width=170)
+    st.image("facg.png", width=130)
 
-st.markdown("---") # Ajoute une belle ligne de séparation sous les logos
-st.title("📊 Prototype GES : Prédiction IA & Analyse Technique")
-st.markdown("Ce simulateur lit vos indicateurs en temps réel depuis Google Sheets, génère une prédiction IA, et simule le comportement boursier du titre **Green Energy Solutions (GES)**.")
+st.markdown("---")
 
-# LECTURE DEPUIS VOTRE GOOGLE SHEET
+# --- DATE, HEURE ET LIEU (OUJDA) ---
+tz_maroc = pytz.timezone('Africa/Casablanca')
+maintenant = datetime.now(tz_maroc)
+
+col_entete1, col_entete2 = st.columns([3, 1])
+with col_entete1:
+    st.title("📊 Terminal GES : Prédiction IA & Live Trading")
+with col_entete2:
+    st.info(f"📍 **Oujda, Maroc** \n📅 {maintenant.strftime('%d/%m/%Y')}  \n⏰ **{maintenant.strftime('%H:%M:%S')}**")
+
+st.markdown("---")
+
+# --- LECTURE GOOGLE SHEETS ---
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1ewwuOPVe4helz2wug0MsPzVd2k_uSbLEJzCPrFD0Naw/export?format=csv&gid=2024535575"
 
 try:
@@ -34,109 +47,94 @@ try:
     tendance_annuelle = float(df_params.loc[df_params['Paramètre'] == 'Croissance_Annuelle', 'Valeur'].values[0])
     volatilite = float(df_params.loc[df_params['Paramètre'] == 'Volatilite', 'Valeur'].values[0])
     annees = int(float(df_params.loc[df_params['Paramètre'] == 'Annees_Simulation', 'Valeur'].values[0]))
-    
-    st.sidebar.success("✅ Connecté au Google Sheet !")
-    st.sidebar.dataframe(df_params)
 except Exception as e:
-    st.error("❌ Erreur de connexion au Google Sheet. Vérifiez que les valeurs sont bien des nombres (utilisez des points, pas des virgules).")
+    st.error("❌ Erreur Google Sheet. Vérifiez les valeurs.")
     st.stop()
 
-# SIMULATION DU MARCHE ET OHLC (Open, High, Low, Close)
-jours_par_an = 252
-jours_cotation = annees * jours_par_an
-tendance_journaliere = tendance_annuelle / jours_par_an 
+# --- CREATION DES DEUX PAGES (ONGLETS) ---
+onglet_ia, onglet_live = st.tabs(["📈 Prédiction IA (Long Terme)", "⚡ Analyse Chartiste (Temps Réel)"])
 
-np.random.seed(42)
-rendements = np.random.normal(loc=tendance_journaliere, scale=volatilite, size=jours_cotation)
-facteurs_prix = np.cumprod(1 + rendements)
-prix_cloture = prix_initial * facteurs_prix
+# ==========================================
+# ONGLET 1 : L'INTELLIGENCE ARTIFICIELLE
+# ==========================================
+with onglet_ia:
+    st.markdown("### Modèle Prédictif sur 5 ans")
+    jours_cotation = annees * 252
+    tendance_journaliere = tendance_annuelle / 252 
 
-dates = pd.date_range(start="2025-07-01", periods=jours_cotation, freq='B')
-df = pd.DataFrame({'Date': dates, 'Close': prix_cloture})
-df['Jour_Index'] = np.arange(len(df))
+    np.random.seed(42)
+    rendements = np.random.normal(loc=tendance_journaliere, scale=volatilite, size=jours_cotation)
+    prix_cloture = prix_initial * np.cumprod(1 + rendements)
 
-# Création des données pour les chandeliers (bougies)
-df['Open'] = df['Close'].shift(1).fillna(prix_initial)
-# Ajout d'une volatilité intra-journalière pour créer les "mèches" des bougies
-amplitude_jour = df['Close'] * (volatilite / np.sqrt(252)) * np.random.uniform(0.2, 1.0, size=jours_cotation)
-df['High'] = df[['Open', 'Close']].max(axis=1) + amplitude_jour
-df['Low'] = df[['Open', 'Close']].min(axis=1) - amplitude_jour
+    dates = pd.date_range(start=maintenant, periods=jours_cotation, freq='B')
+    df_ia = pd.DataFrame({'Date': dates, 'Close': prix_cloture})
+    df_ia['Jour_Index'] = np.arange(len(df_ia))
 
-# INTELLIGENCE ARTIFICIELLE (Prédiction)
-modele_ia = LinearRegression()
-X = df[['Jour_Index']]
-y = df['Close']
-modele_ia.fit(X, y)
-df['Prediction_IA'] = modele_ia.predict(X)
+    modele_ia = LinearRegression()
+    modele_ia.fit(df_ia[['Jour_Index']], df_ia['Close'])
+    df_ia['Prediction_IA'] = modele_ia.predict(df_ia[['Jour_Index']])
 
-# AFFICHAGE DES DEUX GRAPHIQUES CÔTE À CÔTE
-col_gauche, col_droite = st.columns(2)
-
-# --- GRAPHIQUE 1 : TENDANCE IA (À Gauche) ---
-with col_gauche:
-    st.subheader(f"📈 Tendance Globale IA ({annees} ans)")
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(df['Date'], df['Close'], label="Cours simulé", color='#1f77b4', alpha=0.5)
-    ax.plot(df['Date'], df['Prediction_IA'], label="Tendance IA", color='#d62728', linewidth=3)
+    fig, ax = plt.subplots(figsize=(12, 5))
+    ax.plot(df_ia['Date'], df_ia['Close'], label="Cours simulé", color='#1f77b4', alpha=0.5)
+    ax.plot(df_ia['Date'], df_ia['Prediction_IA'], label="Tendance IA", color='#d62728', linewidth=3)
     ax.axhline(y=prix_initial, color='#2ca02c', linestyle='--', label=f"Prix d'IPO ({prix_initial} MAD)")
-    ax.set_xlabel("Année")
     ax.set_ylabel("Prix de l'action (MAD)")
     ax.legend()
     ax.grid(True, linestyle='--', alpha=0.6)
     st.pyplot(fig)
 
-# --- GRAPHIQUE 2 : CHANDELIERS JAPONAIS (À Droite) ---
-with col_droite:
-    st.subheader("🕯️ Analyse Technique (Chandeliers)")
+# ==========================================
+# ONGLET 2 : LE TEMPS REEL (INTRADAY)
+# ==========================================
+with onglet_live:
+    col_gauche, col_droite = st.columns([1, 4])
     
-    # Boutons pour choisir la durée
-    choix_duree = st.radio(
-        "Sélectionnez la fenêtre d'observation :", 
-        ["1 Mois", "3 Mois", "6 Mois", "1 An", "Maximum"], 
-        horizontal=True
-    )
-    
-    # Filtrer les données selon le choix
-    if choix_duree == "1 Mois":
-        df_filtre = df.head(21) # 21 jours de bourse par mois
-    elif choix_duree == "3 Mois":
-        df_filtre = df.head(63)
-    elif choix_duree == "6 Mois":
-        df_filtre = df.head(126)
-    elif choix_duree == "1 An":
-        df_filtre = df.head(252)
-    else:
-        df_filtre = df
+    with col_gauche:
+        st.markdown("### Contrôle Live")
+        if st.button("🔄 Rafraîchir les cotations", use_container_width=True):
+            st.success("Données actualisées !")
+            
+        unite_temps = st.radio(
+            "⏳ Unité de temps :",
+            ["1 Minute", "5 Minutes", "15 Minutes", "30 Minutes", "1 Heure", "1 Jour"]
+        )
 
-    # Création du graphique en chandeliers avec Plotly
-    fig_candle = go.Figure(data=[go.Candlestick(x=df_filtre['Date'],
-                    open=df_filtre['Open'],
-                    high=df_filtre['High'],
-                    low=df_filtre['Low'],
-                    close=df_filtre['Close'],
-                    increasing_line_color='green', decreasing_line_color='red')])
-    
-    fig_candle.update_layout(
-        margin=dict(l=20, r=20, t=20, b=20),
-        xaxis_rangeslider_visible=False,
-        yaxis_title="Prix (MAD)",
-        height=400
-    )
-    st.plotly_chart(fig_candle, use_container_width=True)
+    with col_droite:
+        date_debut_live = maintenant - timedelta(days=30)
+        dates_live = pd.date_range(start=date_debut_live, end=maintenant, freq='1min')
+        
+        volatilite_min = volatilite / np.sqrt(252 * 6.5 * 60)
+        rendements_min = np.random.normal(loc=0, scale=volatilite_min, size=len(dates_live))
+        prix_live = prix_initial * np.cumprod(1 + rendements_min)
+        
+        df_live = pd.DataFrame({'Date': dates_live, 'Price': prix_live})
+        df_live.set_index('Date', inplace=True)
+        
+        dict_resample = {
+            "1 Minute": "1min", "5 Minutes": "5min", 
+            "15 Minutes": "15min", "30 Minutes": "30min", 
+            "1 Heure": "1h", "1 Jour": "D"
+        }
+        
+        df_ohlc = df_live['Price'].resample(dict_resample[unite_temps]).ohlc()
+        df_ohlc = df_ohlc.dropna() 
 
-# METRIQUES FINALES
-st.markdown("---")
-prix_final = df['Close'].iloc[-1]
-rendement_global = ((prix_final / prix_initial) - 1) * 100
+        dernier_prix = df_ohlc['close'].iloc[-1]
+        variation = dernier_prix - prix_initial
+        st.metric(label="Cotation GES en Direct (MAD)", value=f"{dernier_prix:.2f}", delta=f"{variation:.2f} MAD depuis l'IPO")
 
-col1, col2, col3 = st.columns(3)
-col1.metric("Prix initial (IPO)", f"{prix_initial:.2f} MAD")
-col2.metric(f"Prix estimé en fin de période", f"{prix_final:.2f} MAD", f"{rendement_global:.2f} %")
-col3.metric("Volatilité simulée", f"{volatilite*100:.1f} %")
-
-
-
-
-
-
-
+        fig_live = go.Figure(data=[go.Candlestick(
+            x=df_ohlc.index,
+            open=df_ohlc['open'], high=df_ohlc['high'],
+            low=df_ohlc['low'], close=df_ohlc['close'],
+            increasing_line_color='#26a69a', decreasing_line_color='#ef5350'
+        )])
+        
+        fig_live.update_layout(
+            title=f"Analyse Technique Intraday - Bougies de {unite_temps}",
+            yaxis_title="Prix (MAD)",
+            xaxis_rangeslider_visible=False,
+            height=500,
+            margin=dict(l=10, r=10, t=40, b=10)
+        )
+        st.plotly_chart(fig_live, use_container_width=True)
