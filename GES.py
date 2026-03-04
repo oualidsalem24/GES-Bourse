@@ -15,9 +15,9 @@ col_logo1, col_logo2, col_logo3 = st.columns(3)
 with col_logo1:
     st.image("ump.png.png", width=400) 
 with col_logo2:
-    st.image("encg.png.png", width=300)
+    st.image("encg.png.png", width=350)
 with col_logo3:
-    st.image("facg.png.png", width=170)
+    st.image("facg.png.png", width=200)
 
 st.markdown("---")
 
@@ -45,7 +45,7 @@ try:
     volatilite = float(df_params.loc[df_params['Paramètre'] == 'Volatilite', 'Valeur'].values[0])
     annees = int(float(df_params.loc[df_params['Paramètre'] == 'Annees_Simulation', 'Valeur'].values[0]))
     
-    # RETOUR DU TABLEAU SUR LE CÔTÉ (SIDEBAR)
+    # TABLEAU SUR LE CÔTÉ (SIDEBAR)
     st.sidebar.success("✅ Connecté au Google Sheet !")
     st.sidebar.dataframe(df_params)
     
@@ -85,7 +85,7 @@ with onglet_ia:
     ax.grid(True, linestyle='--', alpha=0.6)
     st.pyplot(fig)
     
-    # RETOUR DES RESULTATS EN DESSOUS DU GRAPHIQUE
+    # RESULTATS EN DESSOUS DU GRAPHIQUE
     st.markdown("---")
     prix_final = df_ia['Close'].iloc[-1]
     rendement_global = ((prix_final / prix_initial) - 1) * 100
@@ -103,17 +103,27 @@ with onglet_live:
     
     with col_gauche:
         st.markdown("### Contrôle Live")
-        if st.button("🔄 Rafraîchir les cotations", use_container_width=True):
+        if st.button("🔄 Rafraîchir", use_container_width=True):
             st.success("Cotations actualisées à la seconde !")
             
         unite_temps = st.radio(
             "⏳ Unité de temps :",
             ["5 Minutes", "15 Minutes", "30 Minutes", "1 Heure"]
         )
+        
+        st.markdown("---")
+        # NOUVEAU : Le curseur pour choisir le nombre de jours d'historique
+        historique_jours = st.slider(
+            "📅 Historique (en jours) :",
+            min_value=1,
+            max_value=30,
+            value=5, # Valeur par défaut : 5 jours
+            step=1
+        )
 
     with col_droite:
-        # CORRECTION : On simule sur 5 jours au lieu de 30 pour un affichage propre des bougies
-        date_debut_live = maintenant - timedelta(days=5)
+        # On utilise maintenant la variable 'historique_jours' choisie par l'utilisateur
+        date_debut_live = maintenant - timedelta(days=historique_jours)
         dates_live = pd.date_range(start=date_debut_live, end=maintenant, freq='1min')
         
         volatilite_min = volatilite / np.sqrt(252 * 6.5 * 60)
@@ -146,9 +156,8 @@ with onglet_live:
         fig_live.update_layout(
             title=f"Analyse Technique Intraday - Bougies de {unite_temps}",
             yaxis_title="Prix (MAD)",
-            xaxis_rangeslider_visible=False, # Cache la barre du bas pour faire plus propre
+            xaxis_rangeslider_visible=False,
             height=500,
             margin=dict(l=10, r=10, t=40, b=10)
         )
         st.plotly_chart(fig_live, use_container_width=True)
-
