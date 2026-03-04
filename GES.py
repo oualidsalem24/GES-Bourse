@@ -12,15 +12,12 @@ st.set_page_config(page_title="Simulateur Bourse GES", layout="wide")
 
 # --- AFFICHAGE DES LOGOS ---
 col_logo1, col_logo2, col_logo3 = st.columns(3)
-
 with col_logo1:
-    st.image("ump.png.png", width=320) 
-
+    st.image("ump.png", width=250) 
 with col_logo2:
-    st.image("encg.png.png", width=270)
-
+    st.image("encg.png", width=250)
 with col_logo3:
-    st.image("facg.png.png", width=130)
+    st.image("facg.png", width=130)
 
 st.markdown("---")
 
@@ -36,7 +33,7 @@ with col_entete2:
 
 st.markdown("---")
 
-# --- LECTURE GOOGLE SHEETS ---
+# --- LECTURE GOOGLE SHEETS & BARRE LATÉRALE ---
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1ewwuOPVe4helz2wug0MsPzVd2k_uSbLEJzCPrFD0Naw/export?format=csv&gid=2024535575"
 
 try:
@@ -47,6 +44,11 @@ try:
     tendance_annuelle = float(df_params.loc[df_params['Paramètre'] == 'Croissance_Annuelle', 'Valeur'].values[0])
     volatilite = float(df_params.loc[df_params['Paramètre'] == 'Volatilite', 'Valeur'].values[0])
     annees = int(float(df_params.loc[df_params['Paramètre'] == 'Annees_Simulation', 'Valeur'].values[0]))
+    
+    # RETOUR DU TABLEAU SUR LE CÔTÉ (SIDEBAR)
+    st.sidebar.success("✅ Connecté au Google Sheet !")
+    st.sidebar.dataframe(df_params)
+    
 except Exception as e:
     st.error("❌ Erreur Google Sheet. Vérifiez les valeurs.")
     st.stop()
@@ -58,7 +60,7 @@ onglet_ia, onglet_live = st.tabs(["📈 Prédiction IA (Long Terme)", "⚡ Analy
 # ONGLET 1 : L'INTELLIGENCE ARTIFICIELLE
 # ==========================================
 with onglet_ia:
-    st.markdown("### Modèle Prédictif sur 5 ans")
+    st.markdown(f"### Modèle Prédictif sur {annees} ans")
     jours_cotation = annees * 252
     tendance_journaliere = tendance_annuelle / 252 
 
@@ -82,6 +84,16 @@ with onglet_ia:
     ax.legend()
     ax.grid(True, linestyle='--', alpha=0.6)
     st.pyplot(fig)
+    
+    # RETOUR DES RESULTATS EN DESSOUS DU GRAPHIQUE
+    st.markdown("---")
+    prix_final = df_ia['Close'].iloc[-1]
+    rendement_global = ((prix_final / prix_initial) - 1) * 100
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Prix initial (IPO)", f"{prix_initial:.2f} MAD")
+    col2.metric(f"Prix estimé à {annees} ans", f"{prix_final:.2f} MAD", f"{rendement_global:.2f} %")
+    col3.metric("Volatilité simulée", f"{volatilite*100:.1f} %")
 
 # ==========================================
 # ONGLET 2 : LE TEMPS REEL (INTRADAY)
@@ -92,15 +104,16 @@ with onglet_live:
     with col_gauche:
         st.markdown("### Contrôle Live")
         if st.button("🔄 Rafraîchir les cotations", use_container_width=True):
-            st.success("Données actualisées !")
+            st.success("Cotations actualisées à la seconde !")
             
         unite_temps = st.radio(
             "⏳ Unité de temps :",
-            ["1 Minute", "5 Minutes", "15 Minutes", "30 Minutes", "1 Heure", "1 Jour"]
+            ["5 Minutes", "15 Minutes", "30 Minutes", "1 Heure"]
         )
 
     with col_droite:
-        date_debut_live = maintenant - timedelta(days=30)
+        # CORRECTION : On simule sur 5 jours au lieu de 30 pour un affichage propre des bougies
+        date_debut_live = maintenant - timedelta(days=5)
         dates_live = pd.date_range(start=date_debut_live, end=maintenant, freq='1min')
         
         volatilite_min = volatilite / np.sqrt(252 * 6.5 * 60)
@@ -111,9 +124,8 @@ with onglet_live:
         df_live.set_index('Date', inplace=True)
         
         dict_resample = {
-            "1 Minute": "1min", "5 Minutes": "5min", 
-            "15 Minutes": "15min", "30 Minutes": "30min", 
-            "1 Heure": "1h", "1 Jour": "D"
+            "5 Minutes": "5min", "15 Minutes": "15min", 
+            "30 Minutes": "30min", "1 Heure": "1h"
         }
         
         df_ohlc = df_live['Price'].resample(dict_resample[unite_temps]).ohlc()
@@ -123,6 +135,7 @@ with onglet_live:
         variation = dernier_prix - prix_initial
         st.metric(label="Cotation GES en Direct (MAD)", value=f"{dernier_prix:.2f}", delta=f"{variation:.2f} MAD depuis l'IPO")
 
+        # Affichage propre du graphique boursier
         fig_live = go.Figure(data=[go.Candlestick(
             x=df_ohlc.index,
             open=df_ohlc['open'], high=df_ohlc['high'],
@@ -133,9 +146,8 @@ with onglet_live:
         fig_live.update_layout(
             title=f"Analyse Technique Intraday - Bougies de {unite_temps}",
             yaxis_title="Prix (MAD)",
-            xaxis_rangeslider_visible=False,
+            xaxis_rangeslider_visible=False, # Cache la barre du bas pour faire plus propre
             height=500,
             margin=dict(l=10, r=10, t=40, b=10)
         )
         st.plotly_chart(fig_live, use_container_width=True)
-
