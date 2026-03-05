@@ -10,16 +10,21 @@ import pytz
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Simulateur Bourse GES", layout="wide")
 
+# --- TITRE ET SIGNATURE ---
+st.markdown("<h1 style='text-align: center; color: #1f77b4;'>BOURSE - MASTER FACG ENCG OUJDA</h1>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: gray;'>Créé par M. Oualid SALEM</h4>", unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
+
 # --- AFFICHAGE DES LOGOS ---
 col_logo1, col_logo2, col_logo3 = st.columns(3)
 with col_logo1:
-    st.image("ump.png.png", width=400) 
+    st.image("ump.png", width=250) 
 with col_logo2:
-    st.image("encg.png.png", width=250)
+    st.image("encg.png", width=250)
 with col_logo3:
-    st.image("facg.png.png", width=150)
+    st.image("facg.png", width=130)
 
-st.markdown("---")
+st.markdown("---"
 
 # --- DATE, HEURE ET LIEU (OUJDA) ---
 tz_maroc = pytz.timezone('Africa/Casablanca')
@@ -162,6 +167,7 @@ with onglet_live:
             margin=dict(l=10, r=10, t=40, b=10)
         )
         st.plotly_chart(fig_live, use_container_width=True)
+
 
 
 
