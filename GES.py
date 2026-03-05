@@ -32,7 +32,7 @@ maintenant = datetime.now(tz_maroc)
 
 col_entete1, col_entete2 = st.columns([3, 1])
 with col_entete1:
-    st.title("📊 Bourse Master FACG ENCG Oujda Terminal GES : Prédiction IA & Live Trading")
+    st.title("📊 Terminal GES : Prédiction IA & Live Trading")
 with col_entete2:
     st.info(f"📍 **Oujda, Maroc** \n📅 {maintenant.strftime('%d/%m/%Y')}  \n⏰ **{maintenant.strftime('%H:%M:%S')}**")
 
@@ -167,6 +167,7 @@ with onglet_live:
             margin=dict(l=10, r=10, t=40, b=10)
         )
         st.plotly_chart(fig_live, use_container_width=True)
+
 
 
 
