@@ -24,7 +24,7 @@ with col_logo2:
 with col_logo3:
     st.image("facg.png", width=130)
 
-st.markdown("---"
+st.markdown("---")
 
 # --- DATE, HEURE ET LIEU (OUJDA) ---
 tz_maroc = pytz.timezone('Africa/Casablanca')
@@ -167,6 +167,7 @@ with onglet_live:
             margin=dict(l=10, r=10, t=40, b=10)
         )
         st.plotly_chart(fig_live, use_container_width=True)
+
 
 
 
